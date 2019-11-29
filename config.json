@@ -1,0 +1,5 @@
+{
+    "app_port": "23634",
+    "secret": "justasecretforjwt",
+    "stripe_secret_key": "sk_test_NdYUgO4npBY9oaUcVTHtLtDm004ppRCUpi"
+}
