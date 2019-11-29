@@ -522,13 +522,14 @@ router.post('/payment', cors(), (req, res, next) => middleware.checkToken(req, r
                 res.send({ 'code': 90, 'message': 'Internal Server Error' });
             }
             else {
-                connection.query('SELECT `total_amount_nm` FROM `orders_tb` WHERE `order_id` = ? AND `user_id` = (SELECT `user_id` FROM `users_tb` WHERE `username_st` = ?);', [ orderId, req.decoded.username ], function(query_error, result) {
+                connection.query('SELECT `total_amount_nm`, `qty_purchased_nm` FROM `orders_tb` WHERE `order_id` = ? AND `user_id` = (SELECT `user_id` FROM `users_tb` WHERE `username_st` = ?);', [ orderId, req.decoded.username ], function(query_error, result) {
                     if(query_error) {
                         res.send({ 'code': 90, 'message': 'Internal Server Error' });
                     }
                     else {
                         if(result.length > 0) {
                             let amount_nm = result[0].total_amount_nm * 100;
+                            let qty_nm = parseInt(result[0].qty_purchased_nm);
                             stripe.charges.create({
                                 amount: amount_nm,
                                 currency: 'myr',
@@ -537,7 +538,7 @@ router.post('/payment', cors(), (req, res, next) => middleware.checkToken(req, r
                                 statement_descriptor: 'Test Ecommerce',
                             })
                             .then((charge) => {
-                                connection.query('UPDATE `orders_tb` SET `payment_time` = CURTIME(), `last4_card_no_st` = ?, `status_st` = "SUCCESS", `receipt_url_st` = ? WHERE `order_id` = ? AND `user_id` = (SELECT `user_id` FROM `users_tb` WHERE `username_st` = ?);', [ charge.payment_method_details.card.last4, charge.receipt_url, orderId, req.decoded.username ], function(query_error, result) {
+                                connection.query('UPDATE `orders_tb` SET `payment_time` = CURTIME(), `last4_card_no_st` = ?, `status_st` = "SUCCESS", `receipt_url_st` = ? WHERE `order_id` = ? AND `user_id` = (SELECT `user_id` FROM `users_tb` WHERE `username_st` = ?); UPDATE `products_tb` SET `product_stock_nm` = `product_stock_nm` - ? WHERE `product_id` = (SELECT `product_id` FROM `orders_tb` WHERE `order_id` = ?);', [ charge.payment_method_details.card.last4, charge.receipt_url, orderId, req.decoded.username, qty_nm, orderId ], function(query_error, result) {
                                     if(query_error) {
                                         res.send({ 'code': 90, 'message': 'Internal Server Error' });
                                     }
