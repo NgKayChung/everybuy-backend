@@ -7,6 +7,7 @@ var MYSQL = require('../models/DBConnection');
 
 // POST - process user payment API
 router.post('/', function(req, res) {
+    // set Stripe API private key
     let stripe = require('stripe')(config.stripe_secret_key);
     const orderId = req.body.orderId;
     const tokenId = req.body.tokenId;
@@ -23,6 +24,7 @@ router.post('/', function(req, res) {
                     }
                     else {
                         if(result.length > 0) {
+                            // Stripe accepts payment amount in integer format ie. 2.00 = 200
                             let amount_nm = result[0].total_amount_nm * 100;
                             let qty_nm = parseInt(result[0].qty_purchased_nm);
                             stripe.charges.create({

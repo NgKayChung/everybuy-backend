@@ -119,7 +119,7 @@ router.post('/search/:name', function(req, res) {
     });
 });
 
-/* POST API - Products */
+/* POST API - Product Details */
 router.post('/details', function(req, res) {
     var product_id = req.body.id;
     MYSQL.getConnection(function(conn_error, connection) {

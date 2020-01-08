@@ -39,6 +39,7 @@ router.post('/edit', function(req, res) {
                 res.send({ 'code': 90, 'message': 'Internal Server Error' });
             }
             else {
+                // if actionType is profile - Update Profile
                 if(actionType == "profile") {
                     let username_st = req.body.username_st;
                     let userFirstName_st = req.body.firstname_st;
@@ -48,17 +49,32 @@ router.post('/edit', function(req, res) {
                     let userGender_st = req.body.gender_st;
                     let userBirthdate_st = req.body.birthdate_st;
 
-                    connection.query('UPDATE `users_tb` SET `firstname_st` = ?, `lastname_st` = ?, `email_st` = ?, `phone_number_st` = ?, `gender_st` = ?, `birthdate_dt` = ? WHERE `username_st` = BINARY ?;', [ userFirstName_st, userLastName_st, userEmail_st, userPhoneNumber_st, userGender_st, userBirthdate_st, username_st ], function(query_error, result) {
+                    connection.query('SELECT `email_st` FROM `users_tb` WHERE `email_st` = BINARY ? AND `username_st` != BINARY ?; SELECT `phone_number_st` FROM `users_tb` WHERE `phone_number_st` = BINARY ? AND `username_st` != BINARY ?;', [ userEmail_st, username_st, userPhoneNumber_st, username_st ], function(query_error, result) {
                         if(query_error) {
-                            res.send({ 'code': 90, 'message': 'Internal Server Error' });
+                            res.send({ 'code': 40, 'message': 'Internal Server Error' });
                         }
                         else {
-                            res.send({ 'code': 20, 'message': 'Successful' });
+                            if(result[0].length > 0) {
+                                res.send({ 'code': 40, 'message': 'Email address already registered' });
+                            }
+                            else if(result[1].length > 0) {
+                                res.send({ 'code': 40, 'message': 'Phone number already registered' });
+                            }
+                            else {
+                                connection.query('UPDATE `users_tb` SET `firstname_st` = ?, `lastname_st` = ?, `email_st` = ?, `phone_number_st` = ?, `gender_st` = ?, `birthdate_dt` = ? WHERE `username_st` = BINARY ?;', [ userFirstName_st, userLastName_st, userEmail_st, userPhoneNumber_st, userGender_st, userBirthdate_st, username_st ], function(query_error, result) {
+                                    if(query_error) {
+                                        res.send({ 'code': 90, 'message': 'Internal Server Error' });
+                                    }
+                                    else {
+                                        res.send({ 'code': 20, 'message': 'Successful' });
+                                    }
+                                });
+                            }
                         }
                     });
                     connection.release();
                 }
-                else if(actionType == "password") {
+                else if(actionType == "password") { // if actionType is profile - Update Password
                     let username_st = req.body.username_st;
                     let userOldPassword_st = req.body.oldPassword_st;
                     let userNewPassword_st = req.body.newPassword_st;
